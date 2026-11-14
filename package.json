@@ -1,0 +1,17 @@
+{
+  "name": "solo-leveling-shadow-monarch",
+  "version": "1.0.0",
+  "description": "Solo Leveling: Shadow Monarch - Android Action RPG",
+  "main": "www/index.html",
+  "scripts": {
+    "cap:sync": "npx cap sync",
+    "cap:open": "npx cap open android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.1.2",
+    "@capacitor/core": "^6.1.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.1.2"
+  }
+}

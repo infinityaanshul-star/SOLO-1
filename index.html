@@ -1,0 +1,1954 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Solo Leveling: Shadow Monarch</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --sys-blue: #00d2ff;
+            --sys-purple: #9d4edd;
+            --sys-dark: #070913;
+            --sys-panel: rgba(10, 16, 36, 0.88);
+            --sys-border: rgba(0, 210, 255, 0.55);
+            --shadow-glow: 0 0 18px rgba(0, 210, 255, 0.45), inset 0 0 12px rgba(0, 210, 255, 0.2);
+            --monarch-glow: 0 0 22px rgba(157, 78, 221, 0.65), inset 0 0 14px rgba(157, 78, 221, 0.3);
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--sys-dark);
+            color: #e2f1ff;
+            font-family: 'Rajdhani', sans-serif;
+            overflow: hidden;
+            overscroll-behavior: none;
+            -webkit-tap-highlight-color: transparent;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .font-orbitron {
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        /* Solo Leveling System Window Aesthetic */
+        .system-window {
+            background: linear-gradient(160deg, rgba(11, 20, 48, 0.94) 0%, rgba(7, 11, 26, 0.96) 100%);
+            border: 1.5px solid var(--sys-border);
+            box-shadow: var(--shadow-glow);
+            backdrop-filter: blur(8px);
+            position: relative;
+        }
+
+        .system-window::before {
+            content: '';
+            position: absolute;
+            top: -2px; left: -2px; right: -2px; bottom: -2px;
+            border-radius: inherit;
+            background: linear-gradient(45deg, transparent 40%, rgba(0, 210, 255, 0.3) 50%, transparent 60%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .monarch-window {
+            background: linear-gradient(160deg, rgba(24, 10, 46, 0.94) 0%, rgba(10, 6, 22, 0.96) 100%);
+            border: 1.5px solid rgba(177, 108, 255, 0.75);
+            box-shadow: var(--monarch-glow);
+        }
+
+        .glow-text-blue {
+            text-shadow: 0 0 10px rgba(0, 210, 255, 0.8), 0 0 20px rgba(0, 210, 255, 0.4);
+        }
+
+        .glow-text-purple {
+            text-shadow: 0 0 12px rgba(177, 108, 255, 0.95), 0 0 24px rgba(138, 43, 226, 0.6);
+        }
+
+        .glow-text-red {
+            text-shadow: 0 0 10px rgba(255, 59, 92, 0.85);
+        }
+
+        .sys-btn {
+            background: linear-gradient(180deg, rgba(0, 168, 232, 0.25) 0%, rgba(0, 95, 153, 0.45) 100%);
+            border: 1px solid #00d2ff;
+            box-shadow: 0 0 12px rgba(0, 210, 255, 0.35);
+            transition: all 0.15s ease;
+        }
+
+        .sys-btn:hover:not(:disabled) {
+            background: linear-gradient(180deg, rgba(0, 210, 255, 0.45) 0%, rgba(0, 130, 200, 0.65) 100%);
+            box-shadow: 0 0 20px rgba(0, 210, 255, 0.75);
+            transform: translateY(-1px);
+        }
+
+        .sys-btn:active:not(:disabled) {
+            transform: scale(0.96);
+        }
+
+        .arise-btn {
+            background: linear-gradient(180deg, rgba(157, 78, 221, 0.35) 0%, rgba(72, 12, 168, 0.65) 100%);
+            border: 1.5px solid #c77dff;
+            box-shadow: 0 0 18px rgba(157, 78, 221, 0.65);
+        }
+
+        .arise-btn.ready-pulse {
+            animation: arisePulse 1.2s infinite alternate;
+        }
+
+        @keyframes arisePulse {
+            0% { box-shadow: 0 0 12px rgba(199, 125, 255, 0.6); transform: scale(1); }
+            100% { box-shadow: 0 0 28px rgba(199, 125, 255, 1), 0 0 40px rgba(123, 44, 191, 0.8); transform: scale(1.04); }
+        }
+
+        @keyframes scanline {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(100vh); }
+        }
+
+        .scanline-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 6px;
+            background: linear-gradient(to bottom, transparent, rgba(0, 210, 255, 0.08), transparent);
+            animation: scanline 6s linear infinite;
+            pointer-events: none;
+            z-index: 40;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Custom Scrollbar for Stats Modal */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); }
+        ::-webkit-scrollbar-thumb { background: #00d2ff; border-radius: 4px; }
+    </style>
+</head>
+<body class="relative w-screen h-screen overflow-hidden bg-[#060811]">
+
+    <!-- Subtle System Scanline -->
+    <div class="scanline-overlay"></div>
+
+    <!-- Main Game Canvas -->
+    <canvas id="gameCanvas" class="absolute inset-0 z-0"></canvas>
+
+    <!-- ========================================== -->
+    <!-- 1. SYSTEM AWAKENING (TITLE / START SCREEN) -->
+    <!-- ========================================== -->
+    <div id="startScreen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+        <div class="system-window rounded-xl max-w-lg w-full p-6 sm:p-8 text-center animate-fade-in">
+            <div class="inline-flex items-center gap-2 px-3 py-1 mb-4 rounded-full border border-cyan-400/50 bg-cyan-950/50 text-cyan-300 text-xs sm:text-sm font-orbitron tracking-widest">
+                <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+                SYSTEM NOTIFICATION
+            </div>
+
+            <h1 class="font-orbitron text-2xl sm:text-4xl font-black tracking-wider text-white glow-text-blue mb-2">
+                SOLO LEVELING
+            </h1>
+            <p class="font-orbitron text-sm sm:text-base font-bold text-purple-400 glow-text-purple tracking-widest mb-6">
+                SHADOW MONARCH EDITION
+            </p>
+
+            <div class="bg-slate-950/80 border border-cyan-500/40 rounded-lg p-4 sm:p-5 mb-6 text-left shadow-inner">
+                <p class="text-cyan-300 font-orbitron text-xs sm:text-sm mb-2 tracking-wide">
+                    [NOTICE]
+                </p>
+                <p class="text-white text-base sm:text-lg font-semibold leading-relaxed mb-3">
+                    You have acquired the qualifications to be a <span class="text-cyan-400 font-bold">Player</span>. Will you accept?
+                </p>
+                <p class="text-slate-300 text-xs sm:text-sm border-t border-slate-800 pt-2">
+                    <span class="text-purple-400 font-bold">Mission:</span> Dungeon monsters ko harao, Level Up karo, aur <span class="text-purple-300 font-bold">"ARISE"</span> use karke apni Shadow Army banao!
+                </p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 text-xs text-slate-300 mb-6 bg-slate-900/60 p-3 rounded-lg border border-slate-800">
+                <div><span class="text-cyan-400 font-bold">WASD / Arrows:</span> Move</div>
+                <div><span class="text-cyan-400 font-bold">Click / Space:</span> Dagger Slash</div>
+                <div><span class="text-cyan-400 font-bold">Q / Skill 1:</span> Vital Strike</div>
+                <div><span class="text-cyan-400 font-bold">E / Skill 2:</span> Ruler's Authority</div>
+                <div class="col-span-2 text-purple-300 font-semibold pt-1 border-t border-slate-800">
+                    <span class="text-purple-400 font-bold">R / ARISE:</span> Extract Shadows from fallen enemies!
+                </div>
+            </div>
+
+            <button id="acceptSystemBtn" class="sys-btn w-full py-3.5 sm:py-4 rounded-lg font-orbitron font-bold text-lg sm:text-xl text-white tracking-widest uppercase cursor-pointer">
+                [ ACCEPT ]
+            </button>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 2. TOP HUD (STATUS, HP, MP, RANK & WAVE)   -->
+    <!-- ========================================== -->
+    <div id="gameHud" class="hidden fixed inset-0 pointer-events-none z-20 flex flex-col justify-between p-2.5 sm:p-4">
+        
+        <!-- Top Bar -->
+        <div class="flex flex-wrap items-start justify-between gap-2">
+            
+            <!-- Player Status Panel (Top Left) -->
+            <div class="system-window rounded-xl p-2.5 sm:p-3.5 w-64 sm:w-80 pointer-events-auto">
+                <div class="flex items-center justify-between mb-1.5">
+                    <div class="flex items-center gap-2">
+                        <span id="rankBadge" class="px-2 py-0.5 rounded bg-slate-800 border border-cyan-400/60 font-orbitron font-bold text-xs text-cyan-300">
+                            E-RANK
+                        </span>
+                        <span class="font-orbitron font-bold text-sm sm:text-base text-white tracking-wide">
+                            SUNG JIN-WOO
+                        </span>
+                    </div>
+                    <span class="font-orbitron font-bold text-xs sm:text-sm text-cyan-400">
+                        LV. <span id="levelDisplay">1</span>
+                    </span>
+                </div>
+
+                <!-- HP Bar -->
+                <div class="mb-1.5">
+                    <div class="flex justify-between text-[11px] font-bold text-rose-300 mb-0.5">
+                        <span>HP</span>
+                        <span id="hpText">100 / 100</span>
+                    </div>
+                    <div class="w-full h-2.5 bg-slate-950 rounded-full overflow-hidden border border-rose-500/40">
+                        <div id="hpBar" class="h-full bg-gradient-to-r from-rose-600 to-red-400 transition-all duration-150" style="width: 100%"></div>
+                    </div>
+                </div>
+
+                <!-- MP Bar -->
+                <div class="mb-1.5">
+                    <div class="flex justify-between text-[11px] font-bold text-sky-300 mb-0.5">
+                        <span>MP</span>
+                        <span id="mpText">50 / 50</span>
+                    </div>
+                    <div class="w-full h-2 bg-slate-950 rounded-full overflow-hidden border border-sky-500/40">
+                        <div id="mpBar" class="h-full bg-gradient-to-r from-blue-600 to-cyan-400 transition-all duration-150" style="width: 100%"></div>
+                    </div>
+                </div>
+
+                <!-- XP Bar -->
+                <div>
+                    <div class="flex justify-between text-[10px] font-semibold text-purple-300 mb-0.5">
+                        <span>EXP</span>
+                        <span id="xpText">0 / 100</span>
+                    </div>
+                    <div class="w-full h-1.5 bg-slate-950 rounded-full overflow-hidden border border-purple-500/30">
+                        <div id="xpBar" class="h-full bg-gradient-to-r from-purple-600 to-fuchsia-400 transition-all duration-200" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Shadow Army Counter & Stats Button -->
+                <div class="mt-2.5 pt-2 border-t border-cyan-500/20 flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-1.5 text-xs font-bold text-purple-300">
+                        <span class="inline-block w-2.5 h-2.5 rounded-full bg-purple-500 shadow-[0_0_8px_#a855f7]"></span>
+                        <span>SHADOWS: <span id="shadowCount" class="text-white">0</span>/<span id="maxShadowCount">3</span></span>
+                    </div>
+
+                    <button id="openStatsBtn" class="px-2.5 py-1 rounded bg-cyan-500/20 hover:bg-cyan-500/40 border border-cyan-400/70 text-[11px] font-orbitron font-bold text-cyan-200 flex items-center gap-1 cursor-pointer transition">
+                        <span>STATUS</span>
+                        <span id="statPointsBadge" class="hidden px-1.5 py-0.2 bg-amber-400 text-slate-950 rounded-full font-black animate-bounce">
+                            +0
+                        </span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Wave & Dungeon Info (Top Center/Right) -->
+            <div class="flex items-start gap-2 pointer-events-auto">
+                <div class="system-window rounded-xl px-3.5 py-2 text-center">
+                    <div class="text-[10px] font-orbitron text-cyan-400 tracking-widest">INSTANT DUNGEON</div>
+                    <div class="font-orbitron font-black text-base sm:text-xl text-white">
+                        WAVE <span id="waveDisplay" class="text-cyan-300">1</span>
+                    </div>
+                    <div class="text-[11px] text-slate-300 font-semibold">
+                        Kills: <span id="killsDisplay" class="text-purple-300">0</span>
+                    </div>
+                </div>
+
+                <!-- Sound Toggle Button -->
+                <button id="muteBtn" title="Toggle Sound" class="system-window rounded-xl p-2.5 text-cyan-300 hover:text-white cursor-pointer">
+                    <svg id="soundOnIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+                    </svg>
+                    <svg id="soundOffIcon" class="w-5 h-5 hidden text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Center Banner Notification (System Alerts: LEVEL UP, BOSS SPAWN, ARISE!) -->
+        <div id="systemBanner" class="pointer-events-none self-center my-auto opacity-0 transition-opacity duration-300 transform scale-95">
+            <div class="system-window px-6 py-3 rounded-xl text-center border-2">
+                <div id="bannerSub" class="font-orbitron text-xs tracking-widest text-cyan-300 uppercase">SYSTEM ALERT</div>
+                <div id="bannerTitle" class="font-orbitron text-xl sm:text-3xl font-black text-white glow-text-blue tracking-wider">
+                    LEVEL UP!
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Controls: Virtual Joystick (Mobile/Touch) & Skill Hotbar -->
+        <div class="flex items-end justify-between w-full pb-1 sm:pb-2">
+            
+            <!-- Touch Joystick Zone (Visible on touch/small screens, usable anytime) -->
+            <div id="joystickZone" class="relative w-28 h-28 sm:w-32 sm:h-32 rounded-full border border-cyan-500/30 bg-slate-900/40 backdrop-blur-sm pointer-events-auto flex items-center justify-center md:opacity-60 hover:opacity-100 transition">
+                <div id="joystickKnob" class="w-11 h-11 rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 shadow-[0_0_15px_rgba(0,210,255,0.7)] border border-white/50 pointer-events-none"></div>
+                <span class="absolute -top-5 text-[10px] font-orbitron text-cyan-400/70 tracking-wider">MOVE</span>
+            </div>
+
+            <!-- Action & Skill Buttons (Bottom Right / Center) -->
+            <div class="flex items-end gap-2 sm:gap-3 pointer-events-auto">
+                
+                <!-- Skill 1: Vital Strike (Q) -->
+                <button id="skillQBtn" class="relative system-window w-14 h-14 sm:w-16 sm:h-16 rounded-xl flex flex-col items-center justify-center cursor-pointer active:scale-95 transition overflow-hidden">
+                    <span class="text-lg sm:text-xl">⚡</span>
+                    <span class="font-orbitron text-[9px] sm:text-[10px] font-bold text-cyan-200 mt-0.5">STRIKE</span>
+                    <span class="absolute top-1 left-1.5 text-[9px] font-orbitron text-cyan-400">Q</span>
+                    <span class="absolute bottom-0.5 right-1 text-[9px] text-sky-300">15MP</span>
+                    <div id="cdQ" class="absolute inset-0 bg-slate-950/80 flex items-center justify-center font-orbitron font-bold text-xs text-white hidden">0.0</div>
+                </button>
+
+                <!-- Skill 2: Ruler's Authority (E) -->
+                <button id="skillEBtn" class="relative system-window w-14 h-14 sm:w-16 sm:h-16 rounded-xl flex flex-col items-center justify-center cursor-pointer active:scale-95 transition overflow-hidden">
+                    <span class="text-lg sm:text-xl">🌀</span>
+                    <span class="font-orbitron text-[9px] sm:text-[10px] font-bold text-cyan-200 mt-0.5">RULER</span>
+                    <span class="absolute top-1 left-1.5 text-[9px] font-orbitron text-cyan-400">E</span>
+                    <span class="absolute bottom-0.5 right-1 text-[9px] text-sky-300">25MP</span>
+                    <div id="cdE" class="absolute inset-0 bg-slate-950/80 flex items-center justify-center font-orbitron font-bold text-xs text-white hidden">0.0</div>
+                </button>
+
+                <!-- Signature Skill: ARISE (R) -->
+                <button id="ariseBtn" class="relative arise-btn w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex flex-col items-center justify-center cursor-pointer active:scale-95 transition overflow-hidden">
+                    <span class="text-xl sm:text-2xl">👑</span>
+                    <span class="font-orbitron text-[10px] sm:text-xs font-black text-purple-200 glow-text-purple tracking-wider">ARISE</span>
+                    <span class="absolute top-1 left-1.5 text-[9px] font-orbitron text-purple-300">R</span>
+                    <span id="wispCountBadge" class="absolute top-1 right-1.5 px-1.5 rounded-full bg-purple-600 text-[10px] font-bold text-white hidden">0</span>
+                </button>
+
+                <!-- Primary Dagger Attack (Space / Click) -->
+                <button id="attackBtn" class="relative system-window border-cyan-300 bg-cyan-950/60 w-16 h-16 sm:w-20 sm:h-20 rounded-full flex flex-col items-center justify-center cursor-pointer active:scale-90 transition shadow-[0_0_20px_rgba(0,210,255,0.4)]">
+                    <span class="text-2xl sm:text-3xl">🗡️</span>
+                    <span class="font-orbitron text-[9px] sm:text-[10px] font-bold text-white">SLASH</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 3. SYSTEM STATUS / STAT ALLOCATION MODAL   -->
+    <!-- ========================================== -->
+    <div id="statsModal" class="hidden fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
+        <div class="system-window rounded-2xl max-w-md w-full p-5 sm:p-6">
+            <div class="flex items-center justify-between border-b border-cyan-500/30 pb-3 mb-4">
+                <div>
+                    <h2 class="font-orbitron text-lg sm:text-xl font-black text-white glow-text-blue">STATUS WINDOW</h2>
+                    <p class="text-xs text-cyan-300">Job: <span class="text-purple-400 font-bold">Shadow Monarch</span></p>
+                </div>
+                <button id="closeStatsBtn" class="px-3 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-orbitron text-xs border border-slate-600 cursor-pointer">
+                    CLOSE [ESC]
+                </button>
+            </div>
+
+            <div class="flex items-center justify-between bg-cyan-950/40 border border-cyan-500/40 rounded-lg p-3 mb-4">
+                <span class="font-orbitron text-xs sm:text-sm text-cyan-200">AVAILABLE STAT POINTS</span>
+                <span id="modalStatPoints" class="font-orbitron text-xl font-black text-amber-400">0</span>
+            </div>
+
+            <div class="space-y-3 mb-5">
+                <!-- Strength -->
+                <div class="flex items-center justify-between bg-slate-900/80 p-3 rounded-xl border border-slate-800">
+                    <div>
+                        <div class="font-orbitron font-bold text-sm text-rose-400">STRENGTH (STR)</div>
+                        <div class="text-xs text-slate-400">Increases Dagger & Skill Damage</div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span id="statStrVal" class="font-orbitron font-bold text-lg text-white">10</span>
+                        <button data-stat="str" class="add-stat-btn sys-btn w-8 h-8 rounded-lg font-orbitron font-black text-white flex items-center justify-center cursor-pointer disabled:opacity-30">+</button>
+                    </div>
+                </div>
+
+                <!-- Agility -->
+                <div class="flex items-center justify-between bg-slate-900/80 p-3 rounded-xl border border-slate-800">
+                    <div>
+                        <div class="font-orbitron font-bold text-sm text-emerald-400">AGILITY (AGI)</div>
+                        <div class="text-xs text-slate-400">Increases Movement & Attack Speed</div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span id="statAgiVal" class="font-orbitron font-bold text-lg text-white">10</span>
+                        <button data-stat="agi" class="add-stat-btn sys-btn w-8 h-8 rounded-lg font-orbitron font-black text-white flex items-center justify-center cursor-pointer disabled:opacity-30">+</button>
+                    </div>
+                </div>
+
+                <!-- Intelligence -->
+                <div class="flex items-center justify-between bg-slate-900/80 p-3 rounded-xl border border-slate-800">
+                    <div>
+                        <div class="font-orbitron font-bold text-sm text-purple-400">INTELLIGENCE (INT)</div>
+                        <div class="text-xs text-slate-400">Max MP, Mana Regen & Max Shadows</div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span id="statIntVal" class="font-orbitron font-bold text-lg text-white">10</span>
+                        <button data-stat="int" class="add-stat-btn sys-btn w-8 h-8 rounded-lg font-orbitron font-black text-white flex items-center justify-center cursor-pointer disabled:opacity-30">+</button>
+                    </div>
+                </div>
+
+                <!-- Vitality -->
+                <div class="flex items-center justify-between bg-slate-900/80 p-3 rounded-xl border border-slate-800">
+                    <div>
+                        <div class="font-orbitron font-bold text-sm text-cyan-400">VITALITY (VIT)</div>
+                        <div class="text-xs text-slate-400">Increases Max HP & Defense</div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span id="statVitVal" class="font-orbitron font-bold text-lg text-white">10</span>
+                        <button data-stat="vit" class="add-stat-btn sys-btn w-8 h-8 rounded-lg font-orbitron font-black text-white flex items-center justify-center cursor-pointer disabled:opacity-30">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center text-xs text-slate-400">
+                Tip: Level up karke apne stats badhao aur S-Rank Hunter bano!
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 4. GAME OVER SCREEN                        -->
+    <!-- ========================================== -->
+    <div id="gameOverScreen" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+        <div class="system-window border-rose-500/70 rounded-2xl max-w-md w-full p-6 sm:p-8 text-center">
+            <div class="inline-block px-3 py-1 mb-3 rounded-full bg-rose-950/70 border border-rose-500/60 text-rose-400 font-orbitron text-xs tracking-widest">
+                SYSTEM WARNING
+            </div>
+            <h2 class="font-orbitron text-3xl sm:text-4xl font-black text-rose-500 glow-text-red mb-2">
+                YOU DIED
+            </h2>
+            <p class="text-slate-300 text-sm mb-6">
+                Your heart has stopped. The System awaits your return, Player.
+            </p>
+
+            <div class="grid grid-cols-3 gap-2 bg-slate-950/80 border border-slate-800 rounded-xl p-4 mb-6">
+                <div>
+                    <div class="text-[10px] font-orbitron text-slate-400">FINAL LEVEL</div>
+                    <div id="finalLevel" class="font-orbitron font-bold text-lg text-cyan-400">1</div>
+                </div>
+                <div>
+                    <div class="text-[10px] font-orbitron text-slate-400">WAVE</div>
+                    <div id="finalWave" class="font-orbitron font-bold text-lg text-purple-400">1</div>
+                </div>
+                <div>
+                    <div class="text-[10px] font-orbitron text-slate-400">MONSTERS</div>
+                    <div id="finalKills" class="font-orbitron font-bold text-lg text-rose-400">0</div>
+                </div>
+            </div>
+
+            <button id="restartBtn" class="sys-btn w-full py-3.5 rounded-xl font-orbitron font-bold text-base sm:text-lg text-white tracking-widest cursor-pointer">
+                [ RE-ENTER DUNGEON ]
+            </button>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- GAME ENGINE & LOGIC                        -->
+    <!-- ========================================== -->
+    <script>
+        /**
+         * SOLO LEVELING: SHADOW MONARCH
+         * Complete HTML5 Canvas Action RPG with Web Audio Synthesizer,
+         * Shadow Extraction ("ARISE"), Rank Progression, and Boss Battles.
+         */
+
+        // ==========================================
+        // 1. WEB AUDIO SYNTHESIZER (NO EXTERNAL FILES)
+        // ==========================================
+        class SoundSystem {
+            constructor() {
+                this.ctx = null;
+                this.muted = false;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    this.ctx = new AudioCtx();
+                }
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            toggleMute() {
+                this.muted = !this.muted;
+                return this.muted;
+            }
+
+            playSlash() {
+                if (this.muted || !this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(520, now);
+                osc.frequency.exponentialRampToValueAtTime(95, now + 0.14);
+                gain.gain.setValueAtTime(0.18, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.15);
+            }
+
+            playVitalStrike() {
+                if (this.muted || !this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(880, now);
+                osc.frequency.exponentialRampToValueAtTime(140, now + 0.25);
+                gain.gain.setValueAtTime(0.28, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.26);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.26);
+            }
+
+            playRulersAuthority() {
+                if (this.muted || !this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(160, now);
+                osc.frequency.exponentialRampToValueAtTime(35, now + 0.45);
+                gain.gain.setValueAtTime(0.4, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.46);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.46);
+            }
+
+            playArise() {
+                if (this.muted || !this.ctx) return;
+                const now = this.ctx.currentTime;
+                // Deep dark monarch chord + rising shimmer
+                const freqs = [110, 164.81, 220, 329.63];
+                freqs.forEach((f, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = idx % 2 === 0 ? 'sawtooth' : 'sine';
+                    osc.frequency.setValueAtTime(f * 0.8, now);
+                    osc.frequency.exponentialRampToValueAtTime(f * 1.5, now + 0.65);
+                    gain.gain.setValueAtTime(0.09, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.7);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.7);
+                });
+            }
+
+            playLevelUp() {
+                if (this.muted || !this.ctx) return;
+                const now = this.ctx.currentTime;
+                const notes = [523.25, 659.25, 783.99, 1046.50];
+                notes.forEach((freq, i) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, now + i * 0.08);
+                    gain.gain.setValueAtTime(0.18, now + i * 0.08);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.35);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + i * 0.08);
+                    osc.stop(now + i * 0.08 + 0.36);
+                });
+            }
+
+            playHit() {
+                if (this.muted || !this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(140, now);
+                osc.frequency.exponentialRampToValueAtTime(55, now + 0.08);
+                gain.gain.setValueAtTime(0.12, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.09);
+            }
+        }
+
+        const sfx = new SoundSystem();
+
+        // ==========================================
+        // 2. CANVAS & GAME STATE CONFIGURATION
+        // ==========================================
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
+
+        window.addEventListener('resize', () => {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        });
+
+        const RANKS = [
+            { minLv: 1, name: 'E-RANK', color: '#94a3b8' },
+            { minLv: 3, name: 'D-RANK', color: '#38bdf8' },
+            { minLv: 5, name: 'C-RANK', color: '#34d399' },
+            { minLv: 8, name: 'B-RANK', color: '#fbbf24' },
+            { minLv: 11, name: 'A-RANK', color: '#f87171' },
+            { minLv: 15, name: 'S-RANK', color: '#c084fc' },
+            { minLv: 20, name: 'SHADOW MONARCH', color: '#a855f7' }
+        ];
+
+        const game = {
+            running: false,
+            paused: false,
+            wave: 1,
+            kills: 0,
+            shakeTime: 0,
+            shakeIntensity: 0,
+            waveEnemiesRemaining: 0,
+            waveSpawnTimer: 0,
+            waveTransitionTimer: 0,
+            mouse: { x: width / 2, y: height / 2 },
+            keys: {},
+            joystick: { active: false, dx: 0, dy: 0 },
+            entities: {
+                enemies: [],
+                shadows: [],
+                wisps: [],
+                particles: [],
+                slashes: [],
+                floatingTexts: [],
+                shockwaves: []
+            }
+        };
+
+        // Player Object (Sung Jin-Woo)
+        const player = {
+            x: width / 2,
+            y: height / 2,
+            radius: 18,
+            angle: 0,
+            level: 1,
+            xp: 0,
+            xpToNext: 100,
+            statPoints: 0,
+            stats: {
+                str: 10,
+                agi: 10,
+                int: 10,
+                vit: 10
+            },
+            hp: 150,
+            maxHp: 150,
+            mp: 60,
+            maxMp: 60,
+            attackCooldown: 0,
+            skillQCooldown: 0,
+            skillECooldown: 0,
+            invulnTimer: 0,
+            dashTimer: 0,
+            comboStep: 0
+        };
+
+        function recalculatePlayerStats(healFull = false) {
+            player.maxHp = 100 + player.stats.vit * 15 + (player.level - 1) * 20;
+            player.maxMp = 40 + player.stats.int * 8 + (player.level - 1) * 10;
+            if (healFull) {
+                player.hp = player.maxHp;
+                player.mp = player.maxMp;
+            } else {
+                player.hp = Math.min(player.hp, player.maxHp);
+                player.mp = Math.min(player.mp, player.maxMp);
+            }
+        }
+
+        function getPlayerDamage() {
+            return Math.round(18 + player.stats.str * 3.8 + player.level * 4);
+        }
+
+        function getPlayerSpeed() {
+            return 220 + Math.min(180, player.stats.agi * 5);
+        }
+
+        function getMaxShadows() {
+            return Math.min(12, 2 + Math.floor(player.stats.int / 4));
+        }
+
+        function getCurrentRank() {
+            let current = RANKS[0];
+            for (const r of RANKS) {
+                if (player.level >= r.minLv) current = r;
+            }
+            return current;
+        }
+
+        // ==========================================
+        // 3. UI & SYSTEM NOTIFICATIONS
+        // ==========================================
+        let bannerTimeout = null;
+        function showSystemBanner(sub, title, isMonarch = false) {
+            const banner = document.getElementById('systemBanner');
+            const box = banner.firstElementChild;
+            document.getElementById('bannerSub').textContent = sub;
+            document.getElementById('bannerTitle').textContent = title;
+
+            if (isMonarch) {
+                box.className = 'monarch-window px-6 py-3 rounded-xl text-center border-2';
+                document.getElementById('bannerTitle').className = 'font-orbitron text-2xl sm:text-4xl font-black text-purple-200 glow-text-purple tracking-widest';
+            } else {
+                box.className = 'system-window px-6 py-3 rounded-xl text-center border-2';
+                document.getElementById('bannerTitle').className = 'font-orbitron text-xl sm:text-3xl font-black text-white glow-text-blue tracking-wider';
+            }
+
+            banner.classList.remove('opacity-0', 'scale-95');
+            banner.classList.add('opacity-100', 'scale-100');
+
+            clearTimeout(bannerTimeout);
+            bannerTimeout = setTimeout(() => {
+                banner.classList.remove('opacity-100', 'scale-100');
+                banner.classList.add('opacity-0', 'scale-95');
+            }, 2200);
+        }
+
+        function addFloatingText(x, y, text, color = '#ffffff', size = 16) {
+            game.entities.floatingTexts.push({
+                x, y,
+                text,
+                color,
+                size,
+                vy: -45,
+                life: 0.9,
+                maxLife: 0.9
+            });
+        }
+
+        function triggerScreenShake(intensity = 6, duration = 0.18) {
+            game.shakeIntensity = Math.max(game.shakeIntensity, intensity);
+            game.shakeTime = Math.max(game.shakeTime, duration);
+        }
+
+        function updateHUD() {
+            const rank = getCurrentRank();
+            const rankEl = document.getElementById('rankBadge');
+            rankEl.textContent = rank.name;
+            rankEl.style.color = rank.color;
+            rankEl.style.borderColor = rank.color;
+
+            document.getElementById('levelDisplay').textContent = player.level;
+            document.getElementById('hpText').textContent = `${Math.max(0, Math.ceil(player.hp))} / ${player.maxHp}`;
+            document.getElementById('hpBar').style.width = `${Math.max(0, (player.hp / player.maxHp) * 100)}%`;
+
+            document.getElementById('mpText').textContent = `${Math.floor(player.mp)} / ${player.maxMp}`;
+            document.getElementById('mpBar').style.width = `${Math.max(0, (player.mp / player.maxMp) * 100)}%`;
+
+            document.getElementById('xpText').textContent = `${Math.floor(player.xp)} / ${player.xpToNext}`;
+            document.getElementById('xpBar').style.width = `${Math.min(100, (player.xp / player.xpToNext) * 100)}%`;
+
+            document.getElementById('shadowCount').textContent = game.entities.shadows.length;
+            document.getElementById('maxShadowCount').textContent = getMaxShadows();
+
+            document.getElementById('waveDisplay').textContent = game.wave;
+            document.getElementById('killsDisplay').textContent = game.kills;
+
+            // Stat points badge
+            const spBadge = document.getElementById('statPointsBadge');
+            if (player.statPoints > 0) {
+                spBadge.textContent = `+${player.statPoints}`;
+                spBadge.classList.remove('hidden');
+            } else {
+                spBadge.classList.add('hidden');
+            }
+
+            // Cooldown overlays
+            const cdQEl = document.getElementById('cdQ');
+            if (player.skillQCooldown > 0) {
+                cdQEl.textContent = player.skillQCooldown.toFixed(1);
+                cdQEl.classList.remove('hidden');
+            } else {
+                cdQEl.classList.add('hidden');
+            }
+
+            const cdEEl = document.getElementById('cdE');
+            if (player.skillECooldown > 0) {
+                cdEEl.textContent = player.skillECooldown.toFixed(1);
+                cdEEl.classList.remove('hidden');
+            } else {
+                cdEEl.classList.add('hidden');
+            }
+
+            // ARISE readiness pulse
+            const ariseBtn = document.getElementById('ariseBtn');
+            const wispBadge = document.getElementById('wispCountBadge');
+            const wispsCount = game.entities.wisps.length;
+            if (wispsCount > 0 && game.entities.shadows.length < getMaxShadows()) {
+                ariseBtn.classList.add('ready-pulse');
+                wispBadge.textContent = wispsCount;
+                wispBadge.classList.remove('hidden');
+            } else {
+                ariseBtn.classList.remove('ready-pulse');
+                wispBadge.classList.add('hidden');
+            }
+        }
+
+        function updateStatsModal() {
+            document.getElementById('modalStatPoints').textContent = player.statPoints;
+            document.getElementById('statStrVal').textContent = player.stats.str;
+            document.getElementById('statAgiVal').textContent = player.stats.agi;
+            document.getElementById('statIntVal').textContent = player.stats.int;
+            document.getElementById('statVitVal').textContent = player.stats.vit;
+
+            document.querySelectorAll('.add-stat-btn').forEach(btn => {
+                btn.disabled = player.statPoints <= 0;
+            });
+        }
+
+        // ==========================================
+        // 4. ENEMY & WAVE SPAWNING SYSTEM
+        // ==========================================
+        const ENEMY_TYPES = [
+            {
+                id: 'lycan',
+                name: 'Steel-Fanged Lycan',
+                shadowName: 'Shadow Wolf',
+                radius: 17,
+                baseHp: 55,
+                baseDmg: 10,
+                speed: 135,
+                xp: 28,
+                color: '#64748b',
+                accent: '#f43f5e',
+                isBoss: false
+            },
+            {
+                id: 'icebear',
+                name: 'Ice Bear',
+                shadowName: 'Tank (Shadow Bear)',
+                radius: 23,
+                baseHp: 115,
+                baseDmg: 16,
+                speed: 95,
+                xp: 48,
+                color: '#bae6fd',
+                accent: '#0284c7',
+                isBoss: false
+            },
+            {
+                id: 'highorc',
+                name: 'High Orc Warrior',
+                shadowName: 'Shadow High Orc',
+                radius: 21,
+                baseHp: 95,
+                baseDmg: 18,
+                speed: 112,
+                xp: 45,
+                color: '#ef4444',
+                accent: '#fbbf24',
+                isBoss: false
+            }
+        ];
+
+        const BOSS_TYPES = [
+            {
+                id: 'igris',
+                name: 'Blood-Red Commander Igris',
+                shadowName: 'Marshal Igris',
+                radius: 30,
+                baseHp: 420,
+                baseDmg: 28,
+                speed: 140,
+                xp: 220,
+                color: '#dc2626',
+                accent: '#fca5a5',
+                isBoss: true
+            },
+            {
+                id: 'beru',
+                name: 'Ant King Beru',
+                shadowName: 'General Beru',
+                radius: 32,
+                baseHp: 620,
+                baseDmg: 35,
+                speed: 165,
+                xp: 350,
+                color: '#1e1b4b',
+                accent: '#a855f7',
+                isBoss: true
+            }
+        ];
+
+        function startWave(waveNum) {
+            game.wave = waveNum;
+            const isBossWave = waveNum % 3 === 0;
+            game.waveEnemiesRemaining = 4 + waveNum * 2;
+            game.waveSpawnTimer = 0.5;
+
+            if (isBossWave) {
+                showSystemBanner('WARNING: RED GATE BOSS', `WAVE ${waveNum} - BOSS APPROACHES!`, true);
+                spawnBoss(waveNum);
+            } else {
+                showSystemBanner('DUNGEON GATE OPENED', `WAVE ${waveNum}`);
+            }
+        }
+
+        function getSpawnEdgeCoords() {
+            const margin = 40;
+            const side = Math.floor(Math.random() * 4);
+            if (side === 0) return { x: Math.random() * width, y: -margin };
+            if (side === 1) return { x: width + margin, y: Math.random() * height };
+            if (side === 2) return { x: Math.random() * width, y: height + margin };
+            return { x: -margin, y: Math.random() * height };
+        }
+
+        function spawnEnemy(waveNum) {
+            const pos = getSpawnEdgeCoords();
+            let pool = [ENEMY_TYPES[0]];
+            if (waveNum >= 2) pool.push(ENEMY_TYPES[1]);
+            if (waveNum >= 3) pool.push(ENEMY_TYPES[2]);
+
+            const template = pool[Math.floor(Math.random() * pool.length)];
+            const scale = 1 + (waveNum - 1) * 0.22;
+
+            game.entities.enemies.push({
+                ...template,
+                x: pos.x,
+                y: pos.y,
+                hp: Math.round(template.baseHp * scale),
+                maxHp: Math.round(template.baseHp * scale),
+                dmg: Math.round(template.baseDmg * (1 + (waveNum - 1) * 0.15)),
+                xp: Math.round(template.xp * (1 + (waveNum - 1) * 0.15)),
+                attackTimer: 0,
+                hitFlash: 0,
+                vx: 0,
+                vy: 0
+            });
+        }
+
+        function spawnBoss(waveNum) {
+            const pos = getSpawnEdgeCoords();
+            const bossIndex = Math.floor((waveNum / 3 - 1)) % BOSS_TYPES.length;
+            const template = BOSS_TYPES[bossIndex];
+            const scale = 1 + (waveNum / 3 - 1) * 0.45;
+
+            game.entities.enemies.push({
+                ...template,
+                x: pos.x,
+                y: pos.y,
+                hp: Math.round(template.baseHp * scale),
+                maxHp: Math.round(template.baseHp * scale),
+                dmg: Math.round(template.baseDmg * scale),
+                xp: Math.round(template.xp * scale),
+                attackTimer: 0,
+                hitFlash: 0,
+                vx: 0,
+                vy: 0
+            });
+        }
+
+        // ==========================================
+        // 5. PLAYER COMBAT, SKILLS & "ARISE" LOGIC
+        // ==========================================
+        function spawnParticles(x, y, color, count = 10, speed = 150) {
+            for (let i = 0; i < count; i++) {
+                const ang = Math.random() * Math.PI * 2;
+                const spd = (0.3 + Math.random() * 0.7) * speed;
+                game.entities.particles.push({
+                    x, y,
+                    vx: Math.cos(ang) * spd,
+                    vy: Math.sin(ang) * spd,
+                    size: 2 + Math.random() * 3.5,
+                    color,
+                    life: 0.35 + Math.random() * 0.25,
+                    maxLife: 0.6
+                });
+            }
+        }
+
+        function findNearestEnemy(x, y, maxRange = 450) {
+            let best = null;
+            let bestDist = maxRange;
+            for (const e of game.entities.enemies) {
+                const d = Math.hypot(e.x - x, e.y - y);
+                if (d < bestDist) {
+                    bestDist = d;
+                    best = e;
+                }
+            }
+            return best;
+        }
+
+        function performDaggerSlash() {
+            if (!game.running || game.paused || player.attackCooldown > 0) return;
+
+            // Auto-aim gently toward nearest enemy if using touch/spacebar
+            const nearest = findNearestEnemy(player.x, player.y, 170);
+            if (nearest) {
+                player.angle = Math.atan2(nearest.y - player.y, nearest.x - player.x);
+            }
+
+            const agiFactor = Math.max(0.14, 0.34 - player.stats.agi * 0.005);
+            player.attackCooldown = agiFactor;
+            player.comboStep = (player.comboStep + 1) % 2;
+
+            sfx.playSlash();
+
+            const slashRange = 88;
+            const slashArc = Math.PI * 0.85;
+            const dmg = getPlayerDamage();
+
+            // Visual Slash Arc
+            game.entities.slashes.push({
+                x: player.x,
+                y: player.y,
+                angle: player.angle,
+                radius: slashRange,
+                life: 0.16,
+                maxLife: 0.16,
+                color: player.comboStep === 0 ? '#00d2ff' : '#c084fc'
+            });
+
+            // Hit Detection
+            let hitAny = false;
+            for (const e of game.entities.enemies) {
+                const dx = e.x - player.x;
+                const dy = e.y - player.y;
+                const dist = Math.hypot(dx, dy);
+
+                if (dist <= slashRange + e.radius) {
+                    const angleToEnemy = Math.atan2(dy, dx);
+                    let angleDiff = Math.abs(normalizeAngle(angleToEnemy - player.angle));
+                    if (angleDiff <= slashArc / 2 || dist < 35) {
+                        const isCrit = Math.random() < (0.12 + player.stats.agi * 0.006);
+                        const finalDmg = isCrit ? Math.round(dmg * 1.65) : dmg;
+                        damageEnemy(e, finalDmg, isCrit);
+
+                        // Knockback
+                        const kb = e.isBoss ? 40 : 120;
+                        e.vx += Math.cos(angleToEnemy) * kb;
+                        e.vy += Math.sin(angleToEnemy) * kb;
+                        hitAny = true;
+                    }
+                }
+            }
+
+            if (hitAny) {
+                triggerScreenShake(3.5, 0.08);
+            }
+        }
+
+        function performVitalStrike() {
+            if (!game.running || game.paused) return;
+            const manaCost = 15;
+            if (player.skillQCooldown > 0 || player.mp < manaCost) {
+                addFloatingText(player.x, player.y - 25, player.mp < manaCost ? 'NOT ENOUGH MP!' : 'COOLDOWN!', '#38bdf8', 13);
+                return;
+            }
+
+            const nearest = findNearestEnemy(player.x, player.y, 350);
+            if (nearest) {
+                player.angle = Math.atan2(nearest.y - player.y, nearest.x - player.x);
+            }
+
+            player.mp -= manaCost;
+            player.skillQCooldown = Math.max(1.8, 3.2 - player.stats.agi * 0.04);
+            player.invulnTimer = 0.28;
+
+            sfx.playVitalStrike();
+            triggerScreenShake(7, 0.16);
+
+            // Dash forward
+            const dashDist = 135;
+            const startX = player.x;
+            const startY = player.y;
+            player.x = Math.max(30, Math.min(width - 30, player.x + Math.cos(player.angle) * dashDist));
+            player.y = Math.max(30, Math.min(height - 30, player.y + Math.sin(player.angle) * dashDist));
+
+            spawnParticles(startX, startY, '#00d2ff', 14, 180);
+            spawnParticles(player.x, player.y, '#a855f7', 18, 220);
+
+            game.entities.slashes.push({
+                x: player.x,
+                y: player.y,
+                angle: player.angle,
+                radius: 115,
+                life: 0.24,
+                maxLife: 0.24,
+                color: '#38bdf8'
+            });
+
+            const dmg = Math.round(getPlayerDamage() * 2.3);
+            for (const e of game.entities.enemies) {
+                const dist = Math.hypot(e.x - player.x, e.y - player.y);
+                if (dist <= 115 + e.radius) {
+                    damageEnemy(e, dmg, true);
+                    const ang = Math.atan2(e.y - player.y, e.x - player.x);
+                    e.vx += Math.cos(ang) * (e.isBoss ? 80 : 240);
+                    e.vy += Math.sin(ang) * (e.isBoss ? 80 : 240);
+                }
+            }
+        }
+
+        function performRulersAuthority() {
+            if (!game.running || game.paused) return;
+            const manaCost = 25;
+            if (player.skillECooldown > 0 || player.mp < manaCost) {
+                addFloatingText(player.x, player.y - 25, player.mp < manaCost ? 'NOT ENOUGH MP!' : 'COOLDOWN!', '#38bdf8', 13);
+                return;
+            }
+
+            player.mp -= manaCost;
+            player.skillECooldown = Math.max(3.0, 5.0 - player.stats.int * 0.05);
+
+            sfx.playRulersAuthority();
+            triggerScreenShake(11, 0.25);
+
+            const blastRadius = 210;
+            game.entities.shockwaves.push({
+                x: player.x,
+                y: player.y,
+                radius: 20,
+                maxRadius: blastRadius,
+                life: 0.35,
+                maxLife: 0.35,
+                color: '#a855f7'
+            });
+
+            spawnParticles(player.x, player.y, '#c084fc', 28, 280);
+            addFloatingText(player.x, player.y - 34, "RULER'S AUTHORITY!", '#c084fc', 15);
+
+            const dmg = Math.round(getPlayerDamage() * 1.75 + player.stats.int * 3);
+            for (const e of game.entities.enemies) {
+                const dist = Math.hypot(e.x - player.x, e.y - player.y);
+                if (dist <= blastRadius + e.radius) {
+                    damageEnemy(e, dmg, false);
+                    const ang = Math.atan2(e.y - player.y, e.x - player.x);
+                    e.vx += Math.cos(ang) * (e.isBoss ? 140 : 420);
+                    e.vy += Math.sin(ang) * (e.isBoss ? 140 : 420);
+                }
+            }
+        }
+
+        function performArise() {
+            if (!game.running || game.paused) return;
+            const maxShadows = getMaxShadows();
+            if (game.entities.shadows.length >= maxShadows) {
+                addFloatingText(player.x, player.y - 28, `MAX SHADOWS (${maxShadows}) REACHED!`, '#c084fc', 14);
+                return;
+            }
+
+            if (game.entities.wisps.length === 0) {
+                addFloatingText(player.x, player.y - 28, 'NO SHADOWS TO EXTRACT!', '#94a3b8', 13);
+                return;
+            }
+
+            sfx.playArise();
+            triggerScreenShake(9, 0.25);
+            showSystemBanner('SHADOW EXTRACTION', 'ARISE!', true);
+
+            let extractedCount = 0;
+            while (game.entities.wisps.length > 0 && game.entities.shadows.length < maxShadows) {
+                const wisp = game.entities.wisps.shift();
+                extractedCount++;
+
+                spawnParticles(wisp.x, wisp.y, '#a855f7', 24, 240);
+                game.entities.shockwaves.push({
+                    x: wisp.x,
+                    y: wisp.y,
+                    radius: 10,
+                    maxRadius: 95,
+                    life: 0.3,
+                    maxLife: 0.3,
+                    color: '#9333ea'
+                });
+
+                game.entities.shadows.push({
+                    name: wisp.shadowName,
+                    x: wisp.x,
+                    y: wisp.y,
+                    radius: wisp.radius,
+                    hp: Math.round(wisp.maxHp * 0.85 + player.stats.int * 8),
+                    maxHp: Math.round(wisp.maxHp * 0.85 + player.stats.int * 8),
+                    dmg: Math.round(wisp.dmg * 0.9 + player.stats.int * 2.2),
+                    speed: wisp.speed * 1.25,
+                    isBoss: wisp.isBoss,
+                    attackTimer: 0
+                });
+            }
+
+            if (extractedCount > 0) {
+                addFloatingText(player.x, player.y - 40, `+${extractedCount} SHADOW SOLDIER!`, '#d8b4fe', 17);
+            }
+        }
+
+        function damageEnemy(enemy, amount, isCrit) {
+            enemy.hp -= amount;
+            enemy.hitFlash = 0.12;
+            sfx.playHit();
+
+            spawnParticles(enemy.x, enemy.y, isCrit ? '#fbbf24' : '#38bdf8', isCrit ? 10 : 6, 140);
+            addFloatingText(
+                enemy.x + (Math.random() - 0.5) * 20,
+                enemy.y - enemy.radius,
+                isCrit ? `${amount}!` : `${amount}`,
+                isCrit ? '#fbbf24' : '#ffffff',
+                isCrit ? 19 : 15
+            );
+
+            if (enemy.hp <= 0) {
+                killEnemy(enemy);
+            }
+        }
+
+        function killEnemy(enemy) {
+            const idx = game.entities.enemies.indexOf(enemy);
+            if (idx === -1) return;
+            game.entities.enemies.splice(idx, 1);
+
+            game.kills++;
+            gainXP(enemy.xp);
+
+            spawnParticles(enemy.x, enemy.y, '#ef4444', 16, 180);
+
+            // Spawn Shadow Wisp for "ARISE" extraction
+            game.entities.wisps.push({
+                x: enemy.x,
+                y: enemy.y,
+                radius: enemy.radius * 0.9,
+                shadowName: enemy.shadowName,
+                maxHp: enemy.maxHp,
+                dmg: enemy.dmg,
+                speed: enemy.speed,
+                isBoss: enemy.isBoss,
+                life: 9.0, // 9 seconds to press ARISE
+                maxLife: 9.0
+            });
+        }
+
+        function gainXP(amount) {
+            player.xp += amount;
+            while (player.xp >= player.xpToNext) {
+                player.xp -= player.xpToNext;
+                player.level++;
+                player.statPoints += 3;
+                player.xpToNext = Math.round(player.xpToNext * 1.32);
+
+                recalculatePlayerStats(true); // Full heal on level up!
+                sfx.playLevelUp();
+
+                const rank = getCurrentRank();
+                showSystemBanner(`RANK: ${rank.name} | +3 STAT POINTS`, `LEVEL UP! (LV. ${player.level})`);
+                spawnParticles(player.x, player.y, '#00d2ff', 30, 260);
+            }
+        }
+
+        function normalizeAngle(a) {
+            while (a > Math.PI) a -= Math.PI * 2;
+            while (a < -Math.PI) a += Math.PI * 2;
+            return a;
+        }
+
+        // ==========================================
+        // 6. MAIN UPDATE LOOP
+        // ==========================================
+        function update(dt) {
+            if (!game.running || game.paused) return;
+
+            // Screen Shake decay
+            if (game.shakeTime > 0) {
+                game.shakeTime -= dt;
+                if (game.shakeTime <= 0) game.shakeIntensity = 0;
+            }
+
+            // Player Cooldowns & Mana Regen
+            if (player.attackCooldown > 0) player.attackCooldown -= dt;
+            if (player.skillQCooldown > 0) player.skillQCooldown -= dt;
+            if (player.skillECooldown > 0) player.skillECooldown -= dt;
+            if (player.invulnTimer > 0) player.invulnTimer -= dt;
+
+            const mpRegen = 3.5 + player.stats.int * 0.35;
+            player.mp = Math.min(player.maxMp, player.mp + mpRegen * dt);
+
+            // Player Movement (Keyboard + Touch Joystick)
+            let moveX = 0;
+            let moveY = 0;
+            if (game.keys['w'] || game.keys['arrowup']) moveY -= 1;
+            if (game.keys['s'] || game.keys['arrowdown']) moveY += 1;
+            if (game.keys['a'] || game.keys['arrowleft']) moveX -= 1;
+            if (game.keys['d'] || game.keys['arrowright']) moveX += 1;
+
+            if (game.joystick.active) {
+                moveX += game.joystick.dx;
+                moveY += game.joystick.dy;
+            }
+
+            const moveLen = Math.hypot(moveX, moveY);
+            if (moveLen > 0) {
+                const normX = moveX / Math.max(1, moveLen);
+                const normY = moveY / Math.max(1, moveLen);
+                const spd = getPlayerSpeed();
+                player.x += normX * spd * dt;
+                player.y += normY * spd * dt;
+                player.angle = Math.atan2(normY, normX);
+            }
+
+            // Clamp player to arena bounds
+            player.x = Math.max(player.radius + 10, Math.min(width - player.radius - 10, player.x));
+            player.y = Math.max(player.radius + 10, Math.min(height - player.radius - 10, player.y));
+
+            // Wave Management
+            if (game.waveEnemiesRemaining > 0) {
+                game.waveSpawnTimer -= dt;
+                if (game.waveSpawnTimer <= 0) {
+                    spawnEnemy(game.wave);
+                    game.waveEnemiesRemaining--;
+                    game.waveSpawnTimer = Math.max(0.45, 1.4 - game.wave * 0.06);
+                }
+            } else if (game.entities.enemies.length === 0) {
+                game.waveTransitionTimer += dt;
+                if (game.waveTransitionTimer >= 1.8) {
+                    game.waveTransitionTimer = 0;
+                    startWave(game.wave + 1);
+                }
+            }
+
+            // Update Shadow Wisps
+            for (let i = game.entities.wisps.length - 1; i >= 0; i--) {
+                const w = game.entities.wisps[i];
+                w.life -= dt;
+                if (w.life <= 0) {
+                    game.entities.wisps.splice(i, 1);
+                }
+            }
+
+            // Update Shadow Soldiers (Autonomous AI)
+            for (let i = game.entities.shadows.length - 1; i >= 0; i--) {
+                const s = game.entities.shadows[i];
+                if (s.attackTimer > 0) s.attackTimer -= dt;
+
+                const target = findNearestEnemy(s.x, s.y, 800);
+                if (target) {
+                    const dx = target.x - s.x;
+                    const dy = target.y - s.y;
+                    const dist = Math.hypot(dx, dy);
+                    if (dist > s.radius + target.radius + 6) {
+                        s.x += (dx / dist) * s.speed * dt;
+                        s.y += (dy / dist) * s.speed * dt;
+                    } else if (s.attackTimer <= 0) {
+                        s.attackTimer = 0.65;
+                        damageEnemy(target, s.dmg, false);
+                        spawnParticles(target.x, target.y, '#a855f7', 5, 110);
+                    }
+                } else {
+                    // Orbit calmly near Sung Jin-Woo
+                    const orbitAngle = (Date.now() * 0.002) + i * ((Math.PI * 2) / Math.max(1, game.entities.shadows.length));
+                    const destX = player.x + Math.cos(orbitAngle) * 65;
+                    const destY = player.y + Math.sin(orbitAngle) * 65;
+                    const dx = destX - s.x;
+                    const dy = destY - s.y;
+                    const dist = Math.hypot(dx, dy);
+                    if (dist > 5) {
+                        s.x += (dx / dist) * s.speed * 0.85 * dt;
+                        s.y += (dy / dist) * s.speed * 0.85 * dt;
+                    }
+                }
+            }
+
+            // Update Enemies
+            for (let i = game.entities.enemies.length - 1; i >= 0; i--) {
+                const e = game.entities.enemies[i];
+                if (e.hitFlash > 0) e.hitFlash -= dt;
+                if (e.attackTimer > 0) e.attackTimer -= dt;
+
+                // Apply knockback velocity
+                e.x += e.vx * dt;
+                e.y += e.vy * dt;
+                e.vx *= Math.pow(0.05, dt);
+                e.vy *= Math.pow(0.05, dt);
+
+                // Find target (Shadow Soldier if closer, otherwise Sung Jin-Woo)
+                let targetObj = player;
+                let minDist = Math.hypot(player.x - e.x, player.y - e.y);
+
+                for (const s of game.entities.shadows) {
+                    const d = Math.hypot(s.x - e.x, s.y - e.y);
+                    if (d < minDist * 0.85) {
+                        minDist = d;
+                        targetObj = s;
+                    }
+                }
+
+                const dx = targetObj.x - e.x;
+                const dy = targetObj.y - e.y;
+                const dist = Math.hypot(dx, dy);
+
+                if (dist > e.radius + targetObj.radius + 4) {
+                    e.x += (dx / dist) * e.speed * dt;
+                    e.y += (dy / dist) * e.speed * dt;
+                } else if (e.attackTimer <= 0) {
+                    e.attackTimer = e.isBoss ? 0.95 : 1.15;
+
+                    if (targetObj === player) {
+                        if (player.invulnTimer <= 0) {
+                            const dmgReduction = Math.min(0.45, player.stats.vit * 0.01);
+                            const taken = Math.max(1, Math.round(e.dmg * (1 - dmgReduction)));
+                            player.hp -= taken;
+                            player.invulnTimer = 0.25;
+                            triggerScreenShake(7, 0.16);
+                            sfx.playHit();
+                            addFloatingText(player.x, player.y - 25, `-${taken}`, '#fb7185', 16);
+
+                            if (player.hp <= 0) {
+                                triggerGameOver();
+                                return;
+                            }
+                        }
+                    } else {
+                        // Damage Shadow Soldier
+                        targetObj.hp -= e.dmg;
+                        spawnParticles(targetObj.x, targetObj.y, '#9333ea', 6, 100);
+                        if (targetObj.hp <= 0) {
+                            const sIdx = game.entities.shadows.indexOf(targetObj);
+                            if (sIdx !== -1) game.entities.shadows.splice(sIdx, 1);
+                        }
+                    }
+                }
+            }
+
+            // Update Visual Effects (Particles, Slashes, Shockwaves, Floating Text)
+            for (let i = game.entities.particles.length - 1; i >= 0; i--) {
+                const p = game.entities.particles[i];
+                p.x += p.vx * dt;
+                p.y += p.vy * dt;
+                p.life -= dt;
+                if (p.life <= 0) game.entities.particles.splice(i, 1);
+            }
+
+            for (let i = game.entities.slashes.length - 1; i >= 0; i--) {
+                const s = game.entities.slashes[i];
+                s.x = player.x;
+                s.y = player.y;
+                s.life -= dt;
+                if (s.life <= 0) game.entities.slashes.splice(i, 1);
+            }
+
+            for (let i = game.entities.shockwaves.length - 1; i >= 0; i--) {
+                const sw = game.entities.shockwaves[i];
+                sw.life -= dt;
+                const progress = 1 - (sw.life / sw.maxLife);
+                sw.radius = 20 + (sw.maxRadius - 20) * progress;
+                if (sw.life <= 0) game.entities.shockwaves.splice(i, 1);
+            }
+
+            for (let i = game.entities.floatingTexts.length - 1; i >= 0; i--) {
+                const ft = game.entities.floatingTexts[i];
+                ft.y += ft.vy * dt;
+                ft.life -= dt;
+                if (ft.life <= 0) game.entities.floatingTexts.splice(i, 1);
+            }
+
+            updateHUD();
+        }
+
+        // ==========================================
+        // 7. CANVAS RENDERING ENGINE
+        // ==========================================
+        function drawDungeonBackground() {
+            // Deep Abyssal Stone Floor
+            ctx.fillStyle = '#070a14';
+            ctx.fillRect(0, 0, width, height);
+
+            // Subtle Glowing Mana Grid Tiles
+            const tileSize = 64;
+            ctx.strokeStyle = 'rgba(0, 210, 255, 0.055)';
+            ctx.lineWidth = 1;
+
+            ctx.beginPath();
+            for (let x = 0; x <= width; x += tileSize) {
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, height);
+            }
+            for (let y = 0; y <= height; y += tileSize) {
+                ctx.moveTo(0, y);
+                ctx.lineTo(width, y);
+            }
+            ctx.stroke();
+
+            // Center Summoning / Gate Rune Circle
+            const cx = width / 2;
+            const cy = height / 2;
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.strokeStyle = 'rgba(138, 43, 226, 0.12)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(0, 0, 140, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.strokeStyle = 'rgba(0, 210, 255, 0.1)';
+            ctx.beginPath();
+            ctx.arc(0, 0, 220, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        function render() {
+            ctx.save();
+
+            // Apply Screen Shake
+            if (game.shakeTime > 0) {
+                const sx = (Math.random() - 0.5) * game.shakeIntensity * 2;
+                const sy = (Math.random() - 0.5) * game.shakeIntensity * 2;
+                ctx.translate(sx, sy);
+            }
+
+            drawDungeonBackground();
+
+            // 1. Draw Shadow Wisps (Extractable Souls)
+            const time = Date.now() * 0.005;
+            for (const w of game.entities.wisps) {
+                const pulse = 1 + Math.sin(time * 2) * 0.15;
+                ctx.save();
+                ctx.translate(w.x, w.y);
+
+                // Dark Purple Aura
+                const grad = ctx.createRadialGradient(0, 0, 2, 0, 0, w.radius * 1.5 * pulse);
+                grad.addColorStop(0, 'rgba(192, 132, 252, 0.9)');
+                grad.addColorStop(0.5, 'rgba(126, 34, 206, 0.45)');
+                grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.arc(0, 0, w.radius * 1.5 * pulse, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Rising Wisp Core
+                ctx.fillStyle = '#090314';
+                ctx.strokeStyle = '#d8b4fe';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.arc(0, Math.sin(time) * 3, 7, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.font = 'bold 10px Orbitron, sans-serif';
+                ctx.fillStyle = '#e9d5ff';
+                ctx.textAlign = 'center';
+                ctx.fillText('ARISE [R]', 0, -w.radius - 6);
+                ctx.restore();
+            }
+
+            // 2. Draw Shadow Soldiers
+            for (const s of game.entities.shadows) {
+                ctx.save();
+                ctx.translate(s.x, s.y);
+
+                // Shadow Flame Aura
+                ctx.shadowColor = '#a855f7';
+                ctx.shadowBlur = 16;
+                ctx.fillStyle = '#0c0518';
+                ctx.strokeStyle = s.isBoss ? '#f0abfc' : '#9333ea';
+                ctx.lineWidth = s.isBoss ? 3 : 2;
+
+                ctx.beginPath();
+                ctx.arc(0, 0, s.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+
+                // Glowing Purple Eyes
+                ctx.fillStyle = '#e879f9';
+                ctx.beginPath();
+                ctx.arc(-5, -3, 2.5, 0, Math.PI * 2);
+                ctx.arc(5, -3, 2.5, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Shadow Name Tag
+                ctx.shadowBlur = 0;
+                ctx.font = 'bold 10px Rajdhani, sans-serif';
+                ctx.fillStyle = '#d8b4fe';
+                ctx.textAlign = 'center';
+                ctx.fillText(s.name, 0, -s.radius - 6);
+                ctx.restore();
+            }
+
+            // 3. Draw Enemies
+            for (const e of game.entities.enemies) {
+                ctx.save();
+                ctx.translate(e.x, e.y);
+
+                ctx.shadowColor = e.isBoss ? '#ef4444' : e.accent;
+                ctx.shadowBlur = e.isBoss ? 22 : 10;
+
+                ctx.fillStyle = e.hitFlash > 0 ? '#ffffff' : e.color;
+                ctx.strokeStyle = e.accent;
+                ctx.lineWidth = e.isBoss ? 3.5 : 2;
+
+                ctx.beginPath();
+                ctx.arc(0, 0, e.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+
+                // Menacing Eyes
+                ctx.fillStyle = e.hitFlash > 0 ? '#ef4444' : '#fef08a';
+                ctx.beginPath();
+                ctx.arc(-e.radius * 0.3, -e.radius * 0.2, e.isBoss ? 4 : 2.5, 0, Math.PI * 2);
+                ctx.arc(e.radius * 0.3, -e.radius * 0.2, e.isBoss ? 4 : 2.5, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Enemy HP Bar
+                ctx.shadowBlur = 0;
+                const barW = e.isBoss ? 64 : 36;
+                const barH = e.isBoss ? 6 : 4;
+                const hpPct = Math.max(0, e.hp / e.maxHp);
+
+                ctx.fillStyle = 'rgba(0,0,0,0.75)';
+                ctx.fillRect(-barW / 2, -e.radius - 12, barW, barH);
+                ctx.fillStyle = e.isBoss ? '#f43f5e' : '#ef4444';
+                ctx.fillRect(-barW / 2, -e.radius - 12, barW * hpPct, barH);
+
+                if (e.isBoss) {
+                    ctx.font = 'bold 11px Orbitron, sans-serif';
+                    ctx.fillStyle = '#fca5a5';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(e.name, 0, -e.radius - 17);
+                }
+
+                ctx.restore();
+            }
+
+            // 4. Draw Player (Sung Jin-Woo)
+            ctx.save();
+            ctx.translate(player.x, player.y);
+
+            // Monarch Aura Ring
+            const hasShadows = game.entities.shadows.length > 0;
+            ctx.shadowColor = hasShadows ? '#a855f7' : '#00d2ff';
+            ctx.shadowBlur = 20;
+
+            // Body
+            ctx.fillStyle = '#090d16';
+            ctx.strokeStyle = hasShadows ? '#c084fc' : '#00d2ff';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(0, 0, player.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // Glowing Eyes pointing in facing direction
+            ctx.rotate(player.angle);
+            ctx.fillStyle = '#38bdf8';
+            ctx.beginPath();
+            ctx.arc(7, -5, 2.8, 0, Math.PI * 2);
+            ctx.arc(7, 5, 2.8, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Dual Daggers (Kasaka's Venom Fang & Knight Killer aesthetic)
+            ctx.strokeStyle = '#00d2ff';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.moveTo(10, 12);
+            ctx.lineTo(25, 15);
+            ctx.moveTo(10, -12);
+            ctx.lineTo(25, -15);
+            ctx.stroke();
+
+            ctx.restore();
+
+            // 5. Draw Dagger Slashes
+            for (const s of game.entities.slashes) {
+                const alpha = s.life / s.maxLife;
+                ctx.save();
+                ctx.translate(s.x, s.y);
+                ctx.rotate(s.angle);
+                ctx.strokeStyle = s.color;
+                ctx.globalAlpha = alpha;
+                ctx.lineWidth = 10 * alpha;
+                ctx.shadowColor = s.color;
+                ctx.shadowBlur = 15;
+                ctx.beginPath();
+                ctx.arc(0, 0, s.radius * 0.82, -Math.PI * 0.42, Math.PI * 0.42);
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            // 6. Draw Shockwaves
+            for (const sw of game.entities.shockwaves) {
+                const alpha = sw.life / sw.maxLife;
+                ctx.save();
+                ctx.strokeStyle = sw.color;
+                ctx.globalAlpha = alpha;
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.arc(sw.x, sw.y, sw.radius, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            // 7. Draw Particles
+            for (const p of game.entities.particles) {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            // 8. Draw Floating Damage / System Texts
+            for (const ft of game.entities.floatingTexts) {
+                ctx.save();
+                ctx.globalAlpha = Math.min(1, ft.life / (ft.maxLife * 0.5));
+                ctx.font = `bold ${ft.size}px Orbitron, sans-serif`;
+                ctx.fillStyle = ft.color;
+                ctx.textAlign = 'center';
+                ctx.shadowColor = 'rgba(0,0,0,0.9)';
+                ctx.shadowBlur = 4;
+                ctx.fillText(ft.text, ft.x, ft.y);
+                ctx.restore();
+            }
+
+            ctx.restore();
+        }
+
+        let lastTime = performance.now();
+        function gameLoop(now) {
+            const dt = Math.min(0.05, (now - lastTime) / 1000);
+            lastTime = now;
+
+            update(dt);
+            render();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // ==========================================
+        // 8. GAME LIFECYCLE & INPUT EVENT LISTENERS
+        // ==========================================
+        function startGame() {
+            sfx.init();
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('gameOverScreen').classList.add('hidden');
+            document.getElementById('gameHud').classList.remove('hidden');
+
+            // Reset Player & State
+            player.x = width / 2;
+            player.y = height / 2;
+            player.level = 1;
+            player.xp = 0;
+            player.xpToNext = 100;
+            player.statPoints = 0;
+            player.stats = { str: 10, agi: 10, int: 10, vit: 10 };
+            recalculatePlayerStats(true);
+
+            game.wave = 1;
+            game.kills = 0;
+            game.entities.enemies = [];
+            game.entities.shadows = [];
+            game.entities.wisps = [];
+            game.entities.particles = [];
+            game.entities.slashes = [];
+            game.entities.floatingTexts = [];
+            game.entities.shockwaves = [];
+
+            game.running = true;
+            game.paused = false;
+
+            updateHUD();
+            startWave(1);
+        }
+
+        function triggerGameOver() {
+            game.running = false;
+            document.getElementById('finalLevel').textContent = player.level;
+            document.getElementById('finalWave').textContent = game.wave;
+            document.getElementById('finalKills').textContent = game.kills;
+            document.getElementById('gameOverScreen').classList.remove('hidden');
+        }
+
+        // UI Button Events
+        document.getElementById('acceptSystemBtn').addEventListener('click', startGame);
+        document.getElementById('restartBtn').addEventListener('click', startGame);
+
+        document.getElementById('muteBtn').addEventListener('click', () => {
+            const muted = sfx.toggleMute();
+            document.getElementById('soundOnIcon').classList.toggle('hidden', muted);
+            document.getElementById('soundOffIcon').classList.toggle('hidden', !muted);
+        });
+
+        // Status Modal Open/Close
+        document.getElementById('openStatsBtn').addEventListener('click', () => {
+            if (!game.running) return;
+            game.paused = true;
+            updateStatsModal();
+            document.getElementById('statsModal').classList.remove('hidden');
+        });
+
+        document.getElementById('closeStatsBtn').addEventListener('click', () => {
+            document.getElementById('statsModal').classList.add('hidden');
+            game.paused = false;
+        });
+
+        document.querySelectorAll('.add-stat-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (player.statPoints <= 0) return;
+                const statKey = btn.getAttribute('data-stat');
+                player.stats[statKey]++;
+                player.statPoints--;
+                recalculatePlayerStats(false);
+                if (statKey === 'vit') player.hp += 15;
+                if (statKey === 'int') player.mp += 8;
+                updateStatsModal();
+                updateHUD();
+            });
+        });
+
+        // Skill & Attack Buttons
+        document.getElementById('attackBtn').addEventListener('pointerdown', (e) => {
+            e.stopPropagation();
+            performDaggerSlash();
+        });
+        document.getElementById('skillQBtn').addEventListener('pointerdown', (e) => {
+            e.stopPropagation();
+            performVitalStrike();
+        });
+        document.getElementById('skillEBtn').addEventListener('pointerdown', (e) => {
+            e.stopPropagation();
+            performRulersAuthority();
+        });
+        document.getElementById('ariseBtn').addEventListener('pointerdown', (e) => {
+            e.stopPropagation();
+            performArise();
+        });
+
+        // Canvas Pointer Aim & Slash
+        canvas.addEventListener('pointermove', (e) => {
+            game.mouse.x = e.clientX;
+            game.mouse.y = e.clientY;
+            if (game.running && !game.paused) {
+                player.angle = Math.atan2(game.mouse.y - player.y, game.mouse.x - player.x);
+            }
+        });
+
+        canvas.addEventListener('pointerdown', (e) => {
+            if (!game.running || game.paused) return;
+            player.angle = Math.atan2(e.clientY - player.y, e.clientX - player.x);
+            performDaggerSlash();
+        });
+
+        // Keyboard Controls
+        window.addEventListener('keydown', (e) => {
+            const k = e.key.toLowerCase();
+            game.keys[k] = true;
+
+            if (!game.running) return;
+
+            if (k === 'escape') {
+                const modal = document.getElementById('statsModal');
+                if (!modal.classList.contains('hidden')) {
+                    modal.classList.add('hidden');
+                    game.paused = false;
+                }
+            }
+
+            if (game.paused) return;
+
+            if (k === ' ' || k === 'j') {
+                e.preventDefault();
+                performDaggerSlash();
+            } else if (k === 'q') {
+                performVitalStrike();
+            } else if (k === 'e') {
+                performRulersAuthority();
+            } else if (k === 'r') {
+                performArise();
+            } else if (k === 'c' || k === 'tab') {
+                e.preventDefault();
+                game.paused = true;
+                updateStatsModal();
+                document.getElementById('statsModal').classList.remove('hidden');
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            game.keys[e.key.toLowerCase()] = false;
+        });
+
+        // Virtual Touch Joystick Logic
+        const joystickZone = document.getElementById('joystickZone');
+        const joystickKnob = document.getElementById('joystickKnob');
+        let joystickTouchId = null;
+
+        function handleJoystickMove(clientX, clientY) {
+            const rect = joystickZone.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const maxRadius = rect.width / 2 - 18;
+
+            let dx = clientX - centerX;
+            let dy = clientY - centerY;
+            const dist = Math.hypot(dx, dy);
+
+            if (dist > maxRadius) {
+                dx = (dx / dist) * maxRadius;
+                dy = (dy / dist) * maxRadius;
+            }
+
+            joystickKnob.style.transform = `translate(${dx}px, ${dy}px)`;
+            game.joystick.dx = dx / maxRadius;
+            game.joystick.dy = dy / maxRadius;
+        }
+
+        joystickZone.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.changedTouches[0];
+            joystickTouchId = touch.identifier;
+            game.joystick.active = true;
+            handleJoystickMove(touch.clientX, touch.clientY);
+        }, { passive: false });
+
+        window.addEventListener('touchmove', (e) => {
+            if (!game.joystick.active) return;
+            for (const touch of e.changedTouches) {
+                if (touch.identifier === joystickTouchId) {
+                    handleJoystickMove(touch.clientX, touch.clientY);
+                }
+            }
+        }, { passive: false });
+
+        window.addEventListener('touchend', (e) => {
+            for (const touch of e.changedTouches) {
+                if (touch.identifier === joystickTouchId) {
+                    game.joystick.active = false;
+                    game.joystick.dx = 0;
+                    game.joystick.dy = 0;
+                    joystickKnob.style.transform = 'translate(0px, 0px)';
+                    joystickTouchId = null;
+                }
+            }
+        });
+
+        // Start Render Loop on Window Load
+        window.onload = function () {
+            requestAnimationFrame(gameLoop);
+        };
+    </script>
+</body>
+</html>
